@@ -2,27 +2,30 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import Router from "next/navigation";
 import axios from "axios";
 import Card from "./card";
 
 const Search = () => {
 	const [city, setCity] = useState("");
-	const [temp, setTemp] = useState("");
-	const [loading, setLoading] = useState(false);
+	const [WeatherData, setWeatherData] = useState([]);
+	const [error, setError] = useState(null);
 
-	const url = `https://api.openweathermap.org/data/2.5/weather?lat=35.41&lon=139.41&units=imperial&appid=${process.env.NEXT_PUBLIC_OPEN_WEATHER_API_KEY}`;
+	const apiKey = process.env.NEXT_PUBLIC_OPEN_WEATHER_API_KEY;
+	const apiUrl = "https://api.openweathermap.org";
 
-	const fetchWeather = (e: any) => {
-		e.preventDefault();
-		setLoading(true);
-		axios.get(url).then((res) => {
-			setCity(res.data);
-			console.log("City: ", res.data);
-			return <Card />;
-		});
-		setTemp("");
-		setLoading(false);
+	const handleSearch = async () => {
+		if (city.trim() === "") {
+			return;
+		}
+
+		try {
+			const response = await axios.get(
+				`${apiUrl}/data/2.5/weather?q=${city}&appid=${apiKey}&units=imperial`
+			);
+			setWeatherData(response.data);
+		} catch (error) {
+			console.log("Error fetching weather data: ", error);
+		}
 	};
 
 	return (
@@ -38,7 +41,7 @@ const Search = () => {
 				</div>
 				<button
 					className="bg-emerald-200 hover:bg-teal-100 ease-in-out duration-300 p-2 rounded-md shadow-sm shadow-teal-100"
-					onClick={fetchWeather}
+					onClick={handleSearch}
 				>
 					<Image
 						src="/assets/magnifying-glass.png"
@@ -49,6 +52,11 @@ const Search = () => {
 					/>
 				</button>
 			</div>
+			{WeatherData ? (
+				<Card location={city} />
+			) : (
+				<div>{error || "There ain't no data"}</div>
+			)}
 		</div>
 	);
 };
