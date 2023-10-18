@@ -1,20 +1,38 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import Card from "./card";
 
+type WeatherData = {
+	name: string;
+	main: {
+		temp: number;
+		humidity: number;
+	};
+	wind: {
+		speed: number;
+	};
+	weather: {
+		main: string;
+		description: string;
+	}[];
+	sys: {
+		country: string;
+	};
+};
+
 const Search = () => {
 	const [city, setCity] = useState("");
-	const [WeatherData, setWeatherData] = useState([]);
-	const [error, setError] = useState(null);
-
+	const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
+	const [error, setError] = useState<string | null>(null);
 	const apiKey = process.env.NEXT_PUBLIC_OPEN_WEATHER_API_KEY;
 	const apiUrl = "https://api.openweathermap.org";
 
 	const handleSearch = async () => {
 		if (city.trim() === "") {
+			setError("City Name is Required!");
 			return;
 		}
 
@@ -22,11 +40,17 @@ const Search = () => {
 			const response = await axios.get(
 				`${apiUrl}/data/2.5/weather?q=${city}&appid=${apiKey}&units=imperial`
 			);
+			console.log("Data:", response.data);
 			setWeatherData(response.data);
+			setError(error);
 		} catch (error) {
-			console.log("Error fetching weather data: ", error);
+			setError("Error fetching weather data!");
 		}
 	};
+
+	useEffect(() => {
+		handleSearch();
+	}, []);
 
 	return (
 		<div className="flex flex-col justify-center items-center mt-10 gap-2">
@@ -52,10 +76,10 @@ const Search = () => {
 					/>
 				</button>
 			</div>
-			{WeatherData ? (
-				<Card location={city} />
+			{weatherData ? (
+				<Card weatherData={weatherData} />
 			) : (
-				<div>{error || "There ain't no data"}</div>
+				<div>{error || "There ain't no data."}</div>
 			)}
 		</div>
 	);
